@@ -28,7 +28,7 @@ export default function Dashboard() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([])
   const [metas, setMetas]           = useState<Meta[]>([])
   const [config, setConfig]         = useState<Config>({ ajusteSaldo: 0, modoSaldo: 'mes' })
-  const [fetching, setFetching]     = useState(true)
+  const [fetching, setFetching]     = useState(false)
 
   // Filters
   const now = new Date()
@@ -48,15 +48,20 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     if (!user) return
     setFetching(true)
-    const [t, m, c] = await Promise.all([
-      getTransacoes(user.uid),
-      getMetas(user.uid),
-      getConfig(user.uid),
-    ])
-    setTransacoes(t)
-    setMetas(m)
-    setConfig(c)
-    setFetching(false)
+    try {
+      const [t, m, c] = await Promise.all([
+        getTransacoes(user.uid),
+        getMetas(user.uid),
+        getConfig(user.uid),
+      ])
+      setTransacoes(t)
+      setMetas(m)
+      setConfig(c)
+    } catch (e) {
+      console.error('load error:', e)
+    } finally {
+      setFetching(false)
+    }
   }, [user])
 
   useEffect(() => { load() }, [load])

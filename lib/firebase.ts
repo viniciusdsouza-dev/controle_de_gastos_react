@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app'
-import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
+import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,4 +14,19 @@ const firebaseConfig = {
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
-export const db   = getFirestore(app)
+
+// Auth persiste login entre sessões
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence).catch(() => {})
+}
+
+// Firestore: usa cache se já foi inicializado, senão inicializa com cache ilimitado
+function getDb() {
+  try {
+    return initializeFirestore(app, { cacheSizeBytes: CACHE_SIZE_UNLIMITED })
+  } catch {
+    return getFirestore(app)
+  }
+}
+
+export const db = typeof window !== 'undefined' ? getDb() : getFirestore(app)
