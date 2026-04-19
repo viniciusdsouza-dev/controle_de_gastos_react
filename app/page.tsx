@@ -1,23 +1,23 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '../lib/auth-context'
-import Navbar from '../components/layout/Navbar'
-import TransacaoForm from '../components/ui/TransacaoForm'
-import TransacaoModal from '../components/ui/TransacaoModal'
-import FiltroPainel from '../components/ui/FiltroPainel'
-import SaldoCard from '../components/ui/SaldoCard'
-import GraficoPizza from '../components/ui/GraficoPizza'
-import GraficoBarras from '../components/ui/GraficoBarras'
-import TabelaTransacoes from '../components/ui/TabelaTransacoes'
-import MetasWidget from '../components/ui/MetasWidget'
-import { SummaryCard, Spinner, Dot } from '../components/ui'
-import { getTransacoes, getMetas, getConfig, saveConfig } from '../lib/db'
+import { useAuth } from '../../lib/auth-context'
+import Navbar from '../../components/layout/Navbar'
+import TransacaoForm from '../../components/ui/TransacaoForm'
+import TransacaoModal from '../../components/ui/TransacaoModal'
+import FiltroPainel from '../../components/ui/FiltroPainel'
+import SaldoCard from '../../components/ui/SaldoCard'
+import GraficoPizza from '../../components/ui/GraficoPizza'
+import GraficoBarras from '../../components/ui/GraficoBarras'
+import TabelaTransacoes from '../../components/ui/TabelaTransacoes'
+import MetasWidget from '../../components/ui/MetasWidget'
+import { SummaryCard, Spinner, Dot } from '../../components/ui'
+import { getTransacoes, getMetas, getConfig, saveConfig } from '../../lib/db'
 import {
   filtrarTransacoes, calcularSaldoAcumulado, calcularEvolucao,
   ultimoDiaDoMes, hoje, brl, MESES,
-} from '../lib/utils'
-import type { Transacao, Meta, Config } from '../types'
+} from '../../lib/utils'
+import type { Transacao, Meta, Config } from '../../types'
 import { TrendingDown, TrendingUp, BarChart2 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -40,21 +40,28 @@ export default function Dashboard() {
   const [editando, setEditando] = useState<Transacao | null>(null)
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login')
+    if (!loading && !user) {
+      router.replace('/login')
+    }
   }, [user, loading, router])
 
   const load = useCallback(async () => {
     if (!user) return
     setFetching(true)
-    const [t, m, c] = await Promise.all([
-      getTransacoes(user.uid),
-      getMetas(user.uid),
-      getConfig(user.uid),
-    ])
-    setTransacoes(t)
-    setMetas(m)
-    setConfig(c)
-    setFetching(false)
+    try {
+      const [t, m, c] = await Promise.all([
+        getTransacoes(user.uid),
+        getMetas(user.uid),
+        getConfig(user.uid),
+      ])
+      setTransacoes(t)
+      setMetas(m)
+      setConfig(c)
+    } catch (e) {
+      console.error('load error:', e)
+    } finally {
+      setFetching(false)
+    }
   }, [user])
 
   useEffect(() => { load() }, [load])
@@ -126,7 +133,9 @@ export default function Dashboard() {
     await saveConfig(user.uid, c)
   }
 
-  if (loading || fetching || !user) return <Spinner />
+  if (loading) return <Spinner />
+  if (!user) return null   // redirect em andamento, não mostra spinner
+  if (fetching) return <Spinner />
 
   return (
     <div className="relative z-10">
