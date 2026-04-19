@@ -27,7 +27,7 @@ export default function MetasPage() {
     setFetching(true)
     const [m, t] = await Promise.all([getMetas(user.uid), getTransacoes(user.uid)])
     setMetas(m.sort((a, b) => b.mes.localeCompare(a.mes)))
-    setCategorias([...new Set(t.map(tx => tx.categoria))].sort())
+    setCategorias(Array.from(new Set(t.map(tx => tx.categoria))).sort())
     setFetching(false)
   }, [user])
 
