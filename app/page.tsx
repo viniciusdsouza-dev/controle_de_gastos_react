@@ -102,10 +102,10 @@ export default function Dashboard() {
   const metasMes   = metas.filter(m => m.mes === mesChave)
 
   // Categories list
-  const categorias = useMemo(() => [...new Set(transacoes.map(t => t.categoria))].sort(), [transacoes])
+  const categorias = useMemo(() => Array.from(new Set(transacoes.map(t => t.categoria))).sort(), [transacoes])
   const anos       = useMemo(() => {
     const s = new Set(transacoes.map(t => t.data.slice(0, 4)))
-    const arr = [...s].sort()
+    const arr = Array.from(s).sort()
     if (!arr.includes(String(now.getFullYear()))) arr.push(String(now.getFullYear()))
     return arr
   }, [transacoes, now])
@@ -126,7 +126,7 @@ export default function Dashboard() {
     await saveConfig(user.uid, c)
   }
 
-  if (loading || fetching) return <Spinner />
+  if (loading || fetching || !user) return <Spinner />
 
   return (
     <div className="relative z-10">
