@@ -40,7 +40,9 @@ export default function Dashboard() {
   const [editando, setEditando] = useState<Transacao | null>(null)
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login')
+    if (!loading && !user) {
+      router.replace('/login')
+    }
   }, [user, loading, router])
 
   const load = useCallback(async () => {
@@ -126,7 +128,9 @@ export default function Dashboard() {
     await saveConfig(user.uid, c)
   }
 
-  if (loading || fetching || !user) return <Spinner />
+  if (loading) return <Spinner />
+  if (!user) return null   // redirect em andamento, não mostra spinner
+  if (fetching) return <Spinner />
 
   return (
     <div className="relative z-10">
