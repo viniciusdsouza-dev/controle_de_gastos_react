@@ -1,6 +1,6 @@
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
-  getDocs, getDoc, setDoc, query, orderBy, where,
+  getDocs, getDoc, setDoc, query, where,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type { Transacao, Meta, Config } from '../types'
@@ -9,12 +9,10 @@ import type { Transacao, Meta, Config } from '../types'
 
 export async function getTransacoes(uid: string): Promise<Transacao[]> {
   try {
-    const q = query(
-      collection(db, 'usuarios', uid, 'transacoes'),
-      orderBy('data', 'desc')
-    )
-    const snap = await getDocs(q)
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Transacao))
+    const snap = await getDocs(collection(db, 'usuarios', uid, 'transacoes'))
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Transacao))
+    // Ordenar no cliente para evitar necessidade de índice composto
+    return data.sort((a, b) => b.data.localeCompare(a.data))
   } catch (e) {
     console.error('getTransacoes:', e)
     return []
