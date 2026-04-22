@@ -42,11 +42,13 @@ export function calcularSaldoAcumulado(
   ate: string,
   ajuste: number
 ): number {
+  const adj = isNaN(Number(ajuste)) ? 0 : Number(ajuste)
   const filtradas = transacoes.filter(t => t.data <= ate)
-  const ent = filtradas.filter(t => t.tipo === 'Entrada').reduce((s, t) => s + t.valor, 0)
-  const sai = filtradas.filter(t => t.tipo === 'Saída').reduce((s, t) => s + t.valor, 0)
-  const inv = filtradas.filter(t => t.tipo === 'Investido').reduce((s, t) => s + t.valor, 0)
-  return ajuste + ent - sai - inv
+  const toNum = (v: unknown) => isNaN(Number(v)) ? 0 : Number(v)
+  const ent = filtradas.filter(t => t.tipo === 'Entrada').reduce((s, t) => s + toNum(t.valor), 0)
+  const sai = filtradas.filter(t => t.tipo === 'Saída').reduce((s, t) => s + toNum(t.valor), 0)
+  const inv = filtradas.filter(t => t.tipo === 'Investido').reduce((s, t) => s + toNum(t.valor), 0)
+  return adj + ent - sai - inv
 }
 
 export function calcularEvolucao(transacoes: Transacao[], ano: string): ResumoMes[] {

@@ -75,7 +75,13 @@ export async function deleteMeta(uid: string, id: string) {
 export async function getConfig(uid: string): Promise<Config> {
   try {
     const snap = await getDoc(doc(db, 'usuarios', uid, 'config', 'geral'))
-    if (snap.exists()) return snap.data() as Config
+    if (snap.exists()) {
+      const raw = snap.data()
+      return {
+        ajusteSaldo: isNaN(Number(raw.ajusteSaldo)) ? 0 : Number(raw.ajusteSaldo),
+        modoSaldo: raw.modoSaldo || 'mes',
+      }
+    }
   } catch (e) {
     console.error('getConfig:', e)
   }
@@ -84,9 +90,15 @@ export async function getConfig(uid: string): Promise<Config> {
 
 export async function saveConfig(uid: string, config: Partial<Config>) {
   try {
+    const sanitized = {
+      ...config,
+      ...(config.ajusteSaldo !== undefined
+        ? { ajusteSaldo: isNaN(Number(config.ajusteSaldo)) ? 0 : Number(config.ajusteSaldo) }
+        : {}),
+    }
     await setDoc(
       doc(db, 'usuarios', uid, 'config', 'geral'),
-      config,
+      sanitized,
       { merge: true }
     )
   } catch (e) {

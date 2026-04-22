@@ -22,7 +22,8 @@ export default function SaldoCard({
   const [ajusteVal, setAjusteVal]   = useState('')
   const [saving, setSaving]         = useState(false)
 
-  const positivo = saldo >= 0
+  const saldoSafe = isNaN(saldo) ? 0 : saldo
+  const positivo = saldoSafe >= 0
 
   async function handleSaveAjuste(e: React.FormEvent) {
     e.preventDefault()
@@ -69,7 +70,7 @@ export default function SaldoCard({
 
       {/* Value */}
       <div className="font-mono text-2xl font-bold leading-none mb-1" style={{ color: accent }}>
-        {brl(saldo)}
+        {brl(saldoSafe)}
       </div>
 
       {/* Corte info */}
@@ -85,7 +86,7 @@ export default function SaldoCard({
         <ArrowRight size={10} />
         Mês anterior:
         <span className="font-mono font-semibold" style={{ color: saldoMesAnterior >= 0 ? 'var(--green)' : 'var(--red)' }}>
-          {brl(saldoMesAnterior)}
+          {brl(isNaN(saldoMesAnterior) ? 0 : saldoMesAnterior)}
         </span>
       </div>
 
