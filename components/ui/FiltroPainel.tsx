@@ -1,6 +1,6 @@
 'use client'
 import { Panel, PanelHeader, PanelBody, Dot, Label, Select } from './index'
-import { MESES } from '../../lib/utils'
+import { MESES, CATEGORIAS_ENTRADA, CATEGORIAS_SAIDA } from '../../lib/utils'
 
 interface Props {
   ano: string; setAno: (v: string) => void
@@ -10,7 +10,12 @@ interface Props {
   categorias: string[]
 }
 
+const TODAS_CATEGORIAS_FIXAS = [...new Set([...CATEGORIAS_ENTRADA, ...CATEGORIAS_SAIDA])].sort()
+
 export default function FiltroPainel({ ano, setAno, mes, setMes, categoria, setCategoria, anos, categorias }: Props) {
+  // Mescla categorias fixas com as existentes (dados antigos podem ter categorias customizadas)
+  const todasCategorias = [...new Set([...TODAS_CATEGORIAS_FIXAS, ...categorias])].sort()
+
   return (
     <Panel>
       <PanelHeader><Dot color="pink" />Filtros</PanelHeader>
@@ -32,7 +37,7 @@ export default function FiltroPainel({ ano, setAno, mes, setMes, categoria, setC
           <Label>Categoria</Label>
           <Select value={categoria} onChange={e => setCategoria(e.target.value)}>
             <option value="">Todas</option>
-            {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+            {todasCategorias.map(c => <option key={c} value={c}>{c}</option>)}
           </Select>
         </div>
       </PanelBody>

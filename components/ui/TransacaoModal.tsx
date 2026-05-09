@@ -2,8 +2,8 @@
 import { useState } from 'react'
 import { updateTransacao } from '../../lib/db'
 import { Label, Input, Select, BtnPrimary, BtnGhost } from './index'
-import { ATIVOS } from '../../lib/utils'
-import { X } from 'lucide-react'
+import { ATIVOS, CATEGORIAS_ENTRADA, CATEGORIAS_SAIDA } from '../../lib/utils'
+import { X, RefreshCw } from 'lucide-react'
 import type { Transacao, TipoTransacao, Subtipo } from '../../types'
 
 interface Props {
@@ -14,7 +14,7 @@ interface Props {
   onSaved: () => void
 }
 
-export default function TransacaoModal({ transacao, uid, categorias, onClose, onSaved }: Props) {
+export default function TransacaoModal({ transacao, uid, onClose, onSaved }: Props) {
   const [data, setData]           = useState(transacao.data)
   const [tipo, setTipo]           = useState<TipoTransacao>(transacao.tipo)
   const [subtipo, setSubtipo]     = useState<Subtipo>((transacao.subtipo as Subtipo) || '')
@@ -22,6 +22,13 @@ export default function TransacaoModal({ transacao, uid, categorias, onClose, on
   const [valor, setValor]         = useState(String(transacao.valor))
   const [descricao, setDescricao] = useState(transacao.descricao || '')
   const [saving, setSaving]       = useState(false)
+
+  const categoriasDisponiveis = tipo === 'Entrada' ? CATEGORIAS_ENTRADA : CATEGORIAS_SAIDA
+
+  // Se a categoria atual não está na lista fixa (migração de dados antigos), adiciona ela
+  const opcoesCategoria = categoriasDisponiveis.includes(categoria)
+    ? categoriasDisponiveis
+    : categoria ? [categoria, ...categoriasDisponiveis] : categoriasDisponiveis
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -54,7 +61,18 @@ export default function TransacaoModal({ transacao, uid, categorias, onClose, on
           <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--dim)' }}>
             ✏️ Editar Transação
           </span>
-          <BtnGhost onClick={onClose}><X size={15} /></BtnGhost>
+          <div className="flex items-center gap-2">
+            {transacao.recorrente && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
+                style={{ background: 'rgba(0,229,255,0.1)', color: 'var(--cyan)', border: '1px solid rgba(0,229,255,0.3)' }}>
+                <RefreshCw size={10} />
+                {transacao.parcelaNumero && transacao.mesesRecorrencia
+                  ? `Parcela ${transacao.parcelaNumero}/${transacao.mesesRecorrencia || '∞'}`
+                  : 'Recorrente'}
+              </span>
+            )}
+            <BtnGhost onClick={onClose}><X size={15} /></BtnGhost>
+          </div>
         </div>
 
         {/* Body */}
@@ -66,7 +84,11 @@ export default function TransacaoModal({ transacao, uid, categorias, onClose, on
             </div>
             <div>
               <Label>Tipo</Label>
-              <Select value={tipo} onChange={e => { setTipo(e.target.value as TipoTransacao); setSubtipo('') }}>
+              <Select value={tipo} onChange={e => {
+                setTipo(e.target.value as TipoTransacao)
+                setSubtipo('')
+                setCategoria('')
+              }}>
                 <option value="Entrada">↓ Entrada</option>
                 <option value="Saída">↑ Saída</option>
                 <option value="Investido">◆ Investido</option>
@@ -99,9 +121,10 @@ export default function TransacaoModal({ transacao, uid, categorias, onClose, on
             {!isInvestido && (
               <div className="col-span-2">
                 <Label>Categoria</Label>
-                <Input type="text" value={categoria} onChange={e => setCategoria(e.target.value)}
-                  required list="cat-list-modal" />
-                <datalist id="cat-list-modal">{categorias.map(c => <option key={c} value={c} />)}</datalist>
+                <Select value={categoria} onChange={e => setCategoria(e.target.value)} required>
+                  <option value="">Selecione a categoria...</option>
+                  {opcoesCategoria.map(c => <option key={c} value={c}>{c}</option>)}
+                </Select>
               </div>
             )}
 
@@ -115,6 +138,14 @@ export default function TransacaoModal({ transacao, uid, categorias, onClose, on
               <Input type="text" value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Opcional..." />
             </div>
           </div>
+
+          {transacao.recorrente && (
+            <div className="mx-5 mb-4 px-3 py-2 rounded-lg text-xs"
+              style={{ background: 'rgba(0,229,255,0.05)', border: '1px solid rgba(0,229,255,0.2)', color: 'var(--muted)' }}>
+              <RefreshCw size={10} className="inline mr-1" />
+              Esta edição afeta apenas esta parcela. As demais permanecem inalteradas.
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 px-5 py-4 border-t" style={{ borderColor: 'var(--border)' }}>

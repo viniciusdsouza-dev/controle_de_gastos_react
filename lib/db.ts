@@ -20,9 +20,12 @@ export async function getTransacoes(uid: string): Promise<Transacao[]> {
 }
 
 export async function addTransacao(uid: string, t: Omit<Transacao, 'id' | 'criadoEm'>) {
-  await addDoc(collection(db, 'usuarios', uid, 'transacoes'), {
-    ...t, criadoEm: Date.now(),
-  })
+  // Remove campos undefined para não poluir o Firestore
+  const payload: Record<string, unknown> = { criadoEm: Date.now() }
+  for (const [k, v] of Object.entries(t)) {
+    if (v !== undefined) payload[k] = v
+  }
+  await addDoc(collection(db, 'usuarios', uid, 'transacoes'), payload)
 }
 
 export async function updateTransacao(uid: string, id: string, t: Partial<Transacao>) {

@@ -74,6 +74,44 @@ export function ultimoDiaDoMes(ano: string, mes: string): string {
   return `${ano}-${mes.padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
 
+// ── CATEGORIAS FIXAS ─────────────────────────────────────────────────────────
+
+export const CATEGORIAS_ENTRADA = [
+  'Salário',
+  'Freelance / Bico',
+  'Pensão / Alimony',
+  'Renda de Aluguel',
+  'Dividendos',
+  'Restituição de IR',
+  'Benefício Social',
+  'Outros (Entrada)',
+]
+
+export const CATEGORIAS_SAIDA = [
+  'Alimentação',
+  'Cartão de Crédito',
+  'Empréstimo / Financiamento',
+  'Moradia / Aluguel',
+  'Condomínio',
+  'Energia Elétrica',
+  'Água / Saneamento',
+  'Internet / Telefone',
+  'Streaming / Assinaturas',
+  'Transporte / Combustível',
+  'Estacionamento / Pedágio',
+  'Saúde / Plano de Saúde',
+  'Farmácia',
+  'Educação / Cursos',
+  'Vestuário',
+  'Lazer / Entretenimento',
+  'Viagem',
+  'Supermercado',
+  'Pet',
+  'Seguros',
+  'Impostos / Taxas',
+  'Outros (Saída)',
+]
+
 export const ATIVOS = {
   'Renda Fixa':     ['CDB', 'Tesouro Direto', 'LCI / LCA', 'Poupança', 'Outro RF'],
   'Renda Variável': ['Ações', 'Fundos Imobiliários (FII)', 'ETF', 'BDR', 'Criptomoedas', 'Outro RV'],

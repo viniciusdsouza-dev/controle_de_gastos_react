@@ -6,8 +6,9 @@ import Navbar from '../../components/layout/Navbar'
 import { Panel, PanelHeader, PanelBody, Dot, Label, Select, Badge, BadgeCat, BtnOutline, SummaryCard, Spinner, EmptyState } from '../../components/ui'
 import { getTransacoes, getConfig } from '../../lib/db'
 import { filtrarTransacoes, calcularSaldoAcumulado, ultimoDiaDoMes, brl, fmtData, MESES } from '../../lib/utils'
+import { exportarXlsx } from '../../lib/exportXlsx'
 import type { Transacao } from '../../types'
-import { Download, Inbox, TrendingDown, TrendingUp, BarChart2 } from 'lucide-react'
+import { Download, Inbox, TrendingDown, TrendingUp, BarChart2, RefreshCw } from 'lucide-react'
 
 export default function RelatorioPage() {
   const { user, loading } = useAuth()
@@ -15,6 +16,7 @@ export default function RelatorioPage() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([])
   const [ajuste, setAjuste]         = useState(0)
   const [fetching, setFetching]     = useState(true)
+  const [exporting, setExporting]   = useState(false)
 
   const now = new Date()
   const [ano, setAno] = useState(String(now.getFullYear()))
@@ -33,8 +35,7 @@ export default function RelatorioPage() {
 
   useEffect(() => { load() }, [load])
 
-  const filtradas = useMemo(() => filtrarTransacoes(transacoes, ano, mes, ''), [transacoes, ano, mes])
-
+  const filtradas  = useMemo(() => filtrarTransacoes(transacoes, ano, mes, ''), [transacoes, ano, mes])
   const entradas   = useMemo(() => filtradas.filter(t => t.tipo === 'Entrada').reduce((s, t) => s + t.valor, 0), [filtradas])
   const saidas     = useMemo(() => filtradas.filter(t => t.tipo === 'Saída').reduce((s, t) => s + t.valor, 0), [filtradas])
   const investidos = useMemo(() => filtradas.filter(t => t.tipo === 'Investido').reduce((s, t) => s + t.valor, 0), [filtradas])
@@ -56,14 +57,10 @@ export default function RelatorioPage() {
     return [...s].sort()
   }, [transacoes])
 
-  function exportCSV() {
-    const rows = [['data','tipo','subtipo','valor','categoria','descricao']]
-    filtradas.forEach(t => rows.push([t.data, t.tipo, t.subtipo, String(t.valor), t.categoria, t.descricao]))
-    const csv = rows.map(r => r.join(',')).join('\n')
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-    a.download = `gastos_${ano}_${mes}.csv`
-    a.click()
+  async function handleExport() {
+    setExporting(true)
+    await exportarXlsx(filtradas, { entradas, saidas, investidos, saldo }, ano, mes)
+    setExporting(false)
   }
 
   if (loading || fetching) return <Spinner />
@@ -77,7 +74,9 @@ export default function RelatorioPage() {
             <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--dim)' }}>Análise</p>
             <h1 className="text-2xl font-bold">Relatório Detalhado</h1>
           </div>
-          <BtnOutline onClick={exportCSV} color="cyan"><Download size={12} /> Exportar CSV</BtnOutline>
+          <BtnOutline onClick={handleExport} color="cyan" disabled={exporting}>
+            <Download size={12} /> {exporting ? 'Gerando...' : 'Exportar XLSX'}
+          </BtnOutline>
         </div>
 
         {/* Filtros */}
@@ -160,7 +159,16 @@ export default function RelatorioPage() {
                       {filtradas.map(t => (
                         <tr key={t.id} className="hover:bg-white/[0.02]" style={{ borderBottom: '1px solid var(--border)' }}>
                           <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--dim)' }}>{fmtData(t.data)}</td>
-                          <td className="px-4 py-3"><Badge tipo={t.tipo} /></td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              <Badge tipo={t.tipo} />
+                              {t.recorrente && (
+                                <span title="Recorrente" style={{ color: 'var(--cyan)' }}>
+                                  <RefreshCw size={10} />
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3"><BadgeCat>{t.categoria}</BadgeCat></td>
                           <td className="px-4 py-3 font-mono font-bold"
                             style={{ color: t.tipo === 'Entrada' ? 'var(--green)' : t.tipo === 'Investido' ? 'var(--gold)' : 'var(--red)' }}>

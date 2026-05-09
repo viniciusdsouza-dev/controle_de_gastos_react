@@ -1,10 +1,11 @@
 'use client'
 import { useState } from 'react'
 import { deleteTransacao } from '../../lib/db'
-import { Panel, PanelHeader, PanelBody, PanelBody as _, Dot, Badge, BadgeCat, BtnGhost, BtnOutline, EmptyState } from './index'
+import { Panel, PanelHeader, PanelBody, Dot, Badge, BadgeCat, BtnGhost, BtnOutline, EmptyState } from './index'
 import { brl, fmtData } from '../../lib/utils'
+import { exportarXlsx } from '../../lib/exportXlsx'
 import type { Transacao } from '../../types'
-import { Inbox, Download, Pencil, Trash2 } from 'lucide-react'
+import { Inbox, Download, Pencil, Trash2, RefreshCw } from 'lucide-react'
 
 interface Props {
   transacoes: Transacao[]
@@ -16,7 +17,8 @@ interface Props {
 }
 
 export default function TabelaTransacoes({ transacoes, filtroAno, filtroMes, uid, onDelete, onEdit }: Props) {
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const [deleting, setDeleting]   = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   async function handleDelete(id: string) {
     if (!confirm('Excluir esta transação?')) return
@@ -26,14 +28,13 @@ export default function TabelaTransacoes({ transacoes, filtroAno, filtroMes, uid
     onDelete()
   }
 
-  function exportCSV() {
-    const rows = [['data','tipo','subtipo','valor','categoria','descricao']]
-    transacoes.forEach(t => rows.push([t.data, t.tipo, t.subtipo, String(t.valor), t.categoria, t.descricao]))
-    const csv = rows.map(r => r.join(',')).join('\n')
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-    a.download = `gastos_${filtroAno}_${filtroMes || 'todos'}.csv`
-    a.click()
+  async function handleExport() {
+    setExporting(true)
+    const entradas   = transacoes.filter(t => t.tipo === 'Entrada').reduce((s, t) => s + t.valor, 0)
+    const saidas     = transacoes.filter(t => t.tipo === 'Saída').reduce((s, t) => s + t.valor, 0)
+    const investidos = transacoes.filter(t => t.tipo === 'Investido').reduce((s, t) => s + t.valor, 0)
+    await exportarXlsx(transacoes, { entradas, saidas, investidos, saldo: entradas - saidas - investidos }, filtroAno, filtroMes)
+    setExporting(false)
   }
 
   const valColor = (tipo: string) =>
@@ -43,8 +44,8 @@ export default function TabelaTransacoes({ transacoes, filtroAno, filtroMes, uid
     <Panel>
       <PanelHeader>
         <span className="flex items-center gap-2"><Dot color="green" />Transações</span>
-        <BtnOutline onClick={exportCSV} color="cyan">
-          <Download size={12} /> CSV
+        <BtnOutline onClick={handleExport} color="cyan" disabled={exporting}>
+          <Download size={12} /> {exporting ? 'Gerando...' : 'Exportar XLSX'}
         </BtnOutline>
       </PanelHeader>
       <div className="overflow-x-auto">
@@ -54,7 +55,7 @@ export default function TabelaTransacoes({ transacoes, filtroAno, filtroMes, uid
             <table className="w-full border-collapse">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['Data','Tipo','Categoria','Descrição','Valor',''].map(h => (
+                  {['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor', ''].map(h => (
                     <th key={h} className="px-4 py-2.5 text-left text-xs font-bold tracking-widest uppercase whitespace-nowrap"
                       style={{ color: 'var(--dim)' }}>{h}</th>
                   ))}
@@ -69,7 +70,17 @@ export default function TabelaTransacoes({ transacoes, filtroAno, filtroMes, uid
                       {fmtData(t.data)}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge tipo={t.tipo} subtipo={t.subtipo || undefined} />
+                      <div className="flex items-center gap-1.5">
+                        <Badge tipo={t.tipo} subtipo={t.subtipo || undefined} />
+                        {t.recorrente && (
+                          <span title={t.parcelaNumero ? `Parcela ${t.parcelaNumero}/${t.mesesRecorrencia || '∞'}` : 'Recorrente'}
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs"
+                            style={{ background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)', border: '1px solid rgba(0,229,255,0.25)' }}>
+                            <RefreshCw size={9} />
+                            {t.parcelaNumero && t.mesesRecorrencia ? `${t.parcelaNumero}/${t.mesesRecorrencia}` : '∞'}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <BadgeCat>{t.categoria}</BadgeCat>
