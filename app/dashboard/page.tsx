@@ -117,13 +117,14 @@ export default function Dashboard() {
     return arr
   }, [transacoes, now])
 
-  // Default date for form
+  // Default date for form — sempre reflete o mês/ano do filtro
   const defaultData = useMemo(() => {
-    const d = new Date()
-    if (mes && parseInt(mes) !== (now.getMonth() + 1)) {
-      return `${ano}-${mes.padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    }
-    return hoje()
+    const mesAtual = now.getMonth() + 1
+    const anoAtual = now.getFullYear()
+    const mesNum   = parseInt(mes) || mesAtual
+    const anoNum   = parseInt(ano) || anoAtual
+    if (mesNum === mesAtual && anoNum === anoAtual) return hoje()
+    return `${anoNum}-${String(mesNum).padStart(2, '0')}-01`
   }, [mes, ano, now])
 
   async function handleSaveConfig(c: Partial<Config>) {

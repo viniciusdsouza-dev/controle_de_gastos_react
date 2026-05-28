@@ -108,3 +108,15 @@ export async function saveConfig(uid: string, config: Partial<Config>) {
     console.error('saveConfig:', e)
   }
 }
+
+export async function updateGrupoTransacoes(
+  uid: string,
+  grupoId: string,
+  campos: Partial<Pick<import('../types').Transacao, 'valor' | 'categoria' | 'descricao' | 'tipo' | 'subtipo'>>
+) {
+  const snap = await getDocs(collection(db, 'usuarios', uid, 'transacoes'))
+  const doGrupo = snap.docs.filter(d => d.data().grupoId === grupoId)
+  await Promise.all(
+    doGrupo.map(d => updateDoc(doc(db, 'usuarios', uid, 'transacoes', d.id), campos as Record<string, unknown>))
+  )
+}

@@ -1,45 +1,28 @@
-// Exportação XLSX formatada usando a biblioteca xlsx (SheetJS)
-// Cabeçalho nas cores do site (dark + cyan), linhas brancas com borda preta
+// Exportação XLSX formatada usando SheetJS
+// Roda apenas no browser (client-side)
+import * as XLSX from 'xlsx'
 import type { Transacao } from '../types'
 import { brl, fmtData } from './utils'
 
-// Cor primária do site (surface escuro + cyan accent)
-const HEADER_BG  = '0F1923'  // var(--surface) aproximado
-const HEADER_FG  = '00E5FF'  // var(--cyan)
-const BORDER_COLOR = '000000'
+const HEADER_BG   = '0F1923'
+const HEADER_FG   = '00E5FF'
+const BORDER_CLR  = '000000'
 const WHITE        = 'FFFFFF'
-const GREEN_FG     = '00E676'
-const RED_FG       = 'FF1744'
-const GOLD_FG      = 'FFD740'
+const GREEN_FG    = '00E676'
+const RED_FG      = 'FF1744'
+const GOLD_FG     = 'FFD740'
 
-type WorksheetCell = {
-  v: string | number
-  t: 's' | 'n'
-  s?: Record<string, unknown>
+function col(n: number) {
+  return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[n]
 }
-
-type Worksheet = {
-  [key: string]: WorksheetCell | { v: number; t: 'n' } | unknown
-  '!ref'?: string
-  '!cols'?: { wch: number }[]
-  '!merges'?: unknown[]
-}
-
-function cellRef(col: number, row: number): string {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  return letters[col] + row
-}
+function ref(c: number, r: number) { return col(c) + r }
 
 function border() {
-  return {
-    top:    { style: 'thin', color: { rgb: BORDER_COLOR } },
-    bottom: { style: 'thin', color: { rgb: BORDER_COLOR } },
-    left:   { style: 'thin', color: { rgb: BORDER_COLOR } },
-    right:  { style: 'thin', color: { rgb: BORDER_COLOR } },
-  }
+  const s = { style: 'thin', color: { rgb: BORDER_CLR } }
+  return { top: s, bottom: s, left: s, right: s }
 }
 
-function headerStyle() {
+function hdrStyle() {
   return {
     fill:      { patternType: 'solid', fgColor: { rgb: HEADER_BG } },
     font:      { bold: true, color: { rgb: HEADER_FG }, sz: 10 },
@@ -48,176 +31,129 @@ function headerStyle() {
   }
 }
 
-function dataStyle(color?: string) {
+function dataStyle(color = '111111', right = false) {
   return {
     fill:      { patternType: 'solid', fgColor: { rgb: WHITE } },
-    font:      { color: { rgb: color || '111111' }, sz: 10 },
-    alignment: { horizontal: 'left', vertical: 'center' },
+    font:      { color: { rgb: color }, sz: 10 },
+    alignment: { horizontal: right ? 'right' : 'left', vertical: 'center' },
     border:    border(),
   }
 }
 
-function dataStyleRight(color?: string) {
-  return {
-    ...dataStyle(color),
-    alignment: { horizontal: 'right', vertical: 'center' },
-  }
-}
-
-function tipoColor(tipo: string): string {
+function tipoColor(tipo: string) {
   if (tipo === 'Entrada')   return GREEN_FG
   if (tipo === 'Investido') return GOLD_FG
   return RED_FG
 }
 
-export async function exportarXlsx(
+function cell(v: string | number, t: 's' | 'n', s: object, numFmt?: string) {
+  return numFmt ? { v, t, s, z: numFmt } : { v, t, s }
+}
+
+export function exportarXlsx(
   transacoes: Transacao[],
   resumo: { entradas: number; saidas: number; investidos: number; saldo: number },
   filtroAno: string,
   filtroMes: string
 ) {
-  // Import dinâmico para não quebrar SSR
-  const XLSX = await import('xlsx')
-
   const wb = XLSX.utils.book_new()
 
-  // ── ABA 1: TRANSAÇÕES ──────────────────────────────────────────────────────
-  const headers = ['Data', 'Tipo', 'Subtipo', 'Categoria', 'Descrição', 'Valor (R$)', 'Parcela']
-  const ws: Worksheet = {}
+  // ── ABA 1: TRANSAÇÕES ────────────────────────────────────────────────────
+  const ws: XLSX.WorkSheet = {}
 
-  // Título mesclado
+  // Título
   const titulo = `Relatório de Transações — ${filtroMes ? filtroMes + '/' : ''}${filtroAno}`
-  ws['A1'] = {
-    v: titulo,
-    t: 's',
-    s: {
-      fill:      { patternType: 'solid', fgColor: { rgb: HEADER_BG } },
-      font:      { bold: true, color: { rgb: HEADER_FG }, sz: 13 },
-      alignment: { horizontal: 'center', vertical: 'center' },
-      border:    border(),
-    }
-  }
-
-  // Cabeçalhos na linha 2
-  headers.forEach((h, ci) => {
-    ws[cellRef(ci, 2)] = { v: h, t: 's', s: headerStyle() }
+  ws['A1'] = cell(titulo, 's', {
+    fill:      { patternType: 'solid', fgColor: { rgb: HEADER_BG } },
+    font:      { bold: true, color: { rgb: HEADER_FG }, sz: 13 },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border:    border(),
   })
 
-  // Dados a partir da linha 3
+  // Cabeçalhos
+  const headers = ['Data', 'Tipo', 'Subtipo', 'Categoria', 'Descrição', 'Valor (R$)', 'Parcela']
+  headers.forEach((h, ci) => { ws[ref(ci, 2)] = cell(h, 's', hdrStyle()) })
+
+  // Dados
   transacoes.forEach((t, ri) => {
     const row = ri + 3
     const cor = tipoColor(t.tipo)
-    const parcelaLabel = t.recorrente && t.parcelaNumero && t.mesesRecorrencia
+    const parcela = t.recorrente && t.parcelaNumero && t.mesesRecorrencia
       ? `${t.parcelaNumero}/${t.mesesRecorrencia || '∞'}`
       : t.recorrente ? 'Recorrente' : '—'
 
-    ws[cellRef(0, row)] = { v: fmtData(t.data),       t: 's', s: dataStyle() }
-    ws[cellRef(1, row)] = { v: t.tipo,                 t: 's', s: dataStyle(cor) }
-    ws[cellRef(2, row)] = { v: t.subtipo || '—',       t: 's', s: dataStyle() }
-    ws[cellRef(3, row)] = { v: t.categoria,            t: 's', s: dataStyle() }
-    ws[cellRef(4, row)] = { v: t.descricao || '—',     t: 's', s: dataStyle() }
-    ws[cellRef(5, row)] = { v: t.valor,                t: 'n', s: { ...dataStyleRight(cor), numFmt: 'R$ #,##0.00' } }
-    ws[cellRef(6, row)] = { v: parcelaLabel,            t: 's', s: dataStyle() }
+    ws[ref(0, row)] = cell(fmtData(t.data),   's', dataStyle())
+    ws[ref(1, row)] = cell(t.tipo,              's', dataStyle(cor))
+    ws[ref(2, row)] = cell(t.subtipo || '—',   's', dataStyle())
+    ws[ref(3, row)] = cell(t.categoria,         's', dataStyle())
+    ws[ref(4, row)] = cell(t.descricao || '—', 's', dataStyle())
+    ws[ref(5, row)] = cell(t.valor,             'n', dataStyle(cor, true), 'R$ #,##0.00')
+    ws[ref(6, row)] = cell(parcela,             's', dataStyle())
   })
 
-  const lastRow = transacoes.length + 3
+  const lastData = transacoes.length + 2
 
-  // Linha de totais
-  const totalRow = lastRow
-  ws[cellRef(0, totalRow)] = { v: 'TOTAL',       t: 's', s: headerStyle() }
-  ws[cellRef(1, totalRow)] = { v: '',            t: 's', s: headerStyle() }
-  ws[cellRef(2, totalRow)] = { v: '',            t: 's', s: headerStyle() }
-  ws[cellRef(3, totalRow)] = { v: '',            t: 's', s: headerStyle() }
-  ws[cellRef(4, totalRow)] = { v: 'Entradas',   t: 's', s: { ...headerStyle(), font: { bold: true, color: { rgb: GREEN_FG }, sz: 10 } } }
-  ws[cellRef(5, totalRow)] = {
-    v: resumo.entradas,
-    t: 'n',
-    s: { ...dataStyleRight(GREEN_FG), numFmt: 'R$ #,##0.00', font: { bold: true, color: { rgb: GREEN_FG }, sz: 10 }, fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } } }
-  }
-
-  const totalRow2 = lastRow + 1
-  ws[cellRef(0, totalRow2)] = { v: '',         t: 's', s: headerStyle() }
-  ws[cellRef(1, totalRow2)] = { v: '',         t: 's', s: headerStyle() }
-  ws[cellRef(2, totalRow2)] = { v: '',         t: 's', s: headerStyle() }
-  ws[cellRef(3, totalRow2)] = { v: '',         t: 's', s: headerStyle() }
-  ws[cellRef(4, totalRow2)] = { v: 'Saídas',  t: 's', s: { ...headerStyle(), font: { bold: true, color: { rgb: RED_FG }, sz: 10 } } }
-  ws[cellRef(5, totalRow2)] = {
-    v: resumo.saidas,
-    t: 'n',
-    s: { ...dataStyleRight(RED_FG), numFmt: 'R$ #,##0.00', font: { bold: true, color: { rgb: RED_FG }, sz: 10 }, fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } } }
-  }
-
-  const totalRow3 = lastRow + 2
-  ws[cellRef(0, totalRow3)] = { v: '',            t: 's', s: headerStyle() }
-  ws[cellRef(1, totalRow3)] = { v: '',            t: 's', s: headerStyle() }
-  ws[cellRef(2, totalRow3)] = { v: '',            t: 's', s: headerStyle() }
-  ws[cellRef(3, totalRow3)] = { v: '',            t: 's', s: headerStyle() }
-  ws[cellRef(4, totalRow3)] = { v: 'Investido',  t: 's', s: { ...headerStyle(), font: { bold: true, color: { rgb: GOLD_FG }, sz: 10 } } }
-  ws[cellRef(5, totalRow3)] = {
-    v: resumo.investidos,
-    t: 'n',
-    s: { ...dataStyleRight(GOLD_FG), numFmt: 'R$ #,##0.00', font: { bold: true, color: { rgb: GOLD_FG }, sz: 10 }, fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } } }
-  }
-
-  const totalRow4 = lastRow + 3
-  const saldoColor = resumo.saldo >= 0 ? GREEN_FG : RED_FG
-  ws[cellRef(0, totalRow4)] = { v: '',      t: 's', s: headerStyle() }
-  ws[cellRef(1, totalRow4)] = { v: '',      t: 's', s: headerStyle() }
-  ws[cellRef(2, totalRow4)] = { v: '',      t: 's', s: headerStyle() }
-  ws[cellRef(3, totalRow4)] = { v: '',      t: 's', s: headerStyle() }
-  ws[cellRef(4, totalRow4)] = { v: 'Saldo', t: 's', s: { ...headerStyle(), font: { bold: true, color: { rgb: HEADER_FG }, sz: 10 } } }
-  ws[cellRef(5, totalRow4)] = {
-    v: resumo.saldo,
-    t: 'n',
-    s: { ...dataStyleRight(saldoColor), numFmt: 'R$ #,##0.00', font: { bold: true, color: { rgb: saldoColor }, sz: 10 }, fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } } }
-  }
-
-  ws['!ref'] = `A1:G${totalRow4}`
-  ws['!cols'] = [
-    { wch: 13 }, // Data
-    { wch: 11 }, // Tipo
-    { wch: 14 }, // Subtipo
-    { wch: 24 }, // Categoria
-    { wch: 30 }, // Descrição
-    { wch: 16 }, // Valor
-    { wch: 12 }, // Parcela
+  // Totais
+  const totais = [
+    { label: 'Entradas',   valor: resumo.entradas,   cor: GREEN_FG },
+    { label: 'Saídas',     valor: resumo.saidas,     cor: RED_FG },
+    { label: 'Investido',  valor: resumo.investidos, cor: GOLD_FG },
+    { label: 'Saldo',      valor: resumo.saldo,      cor: resumo.saldo >= 0 ? GREEN_FG : RED_FG },
   ]
+  totais.forEach(({ label, valor, cor }, i) => {
+    const row = lastData + 2 + i
+    for (let c = 0; c < 5; c++) ws[ref(c, row)] = cell('', 's', hdrStyle())
+    ws[ref(4, row)] = cell(label, 's', { ...hdrStyle(), font: { bold: true, color: { rgb: cor }, sz: 10 } })
+    ws[ref(5, row)] = cell(valor, 'n', {
+      fill:      { patternType: 'solid', fgColor: { rgb: HEADER_BG } },
+      font:      { bold: true, color: { rgb: cor }, sz: 10 },
+      alignment: { horizontal: 'right', vertical: 'center' },
+      border:    border(),
+    }, 'R$ #,##0.00')
+    ws[ref(6, row)] = cell('', 's', hdrStyle())
+  })
+
+  const totalRows = lastData + 5
+  ws['!ref']    = `A1:G${totalRows}`
+  ws['!cols']   = [{ wch: 13 }, { wch: 11 }, { wch: 14 }, { wch: 24 }, { wch: 30 }, { wch: 16 }, { wch: 12 }]
   ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }]
 
-  XLSX.utils.book_append_sheet(wb, ws as Parameters<typeof XLSX.utils.book_append_sheet>[1], 'Transações')
+  XLSX.utils.book_append_sheet(wb, ws, 'Transações')
 
-  // ── ABA 2: RESUMO POR CATEGORIA ──────────────────────────────────────────
-  const catMap: Record<string, { tipo: string; valor: number }> = {}
+  // ── ABA 2: POR CATEGORIA ─────────────────────────────────────────────────
+  const catMap: Record<string, { tipo: string; subtipo: string; valor: number }> = {}
   transacoes.forEach(t => {
-    const k = `${t.tipo}|${t.categoria}`
-    if (!catMap[k]) catMap[k] = { tipo: t.tipo, valor: 0 }
+    const k = `${t.tipo}||${t.subtipo || ''}||${t.categoria}`
+    if (!catMap[k]) catMap[k] = { tipo: t.tipo, subtipo: t.subtipo || '', valor: 0 }
     catMap[k].valor += t.valor
   })
 
-  const wsRes: Worksheet = {}
-  wsRes['A1'] = { v: 'Resumo por Categoria', t: 's', s: { fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } }, font: { bold: true, color: { rgb: HEADER_FG }, sz: 13 }, alignment: { horizontal: 'center', vertical: 'center' }, border: border() } }
-  wsRes['B1'] = { v: '', t: 's', s: { fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } }, border: border() } }
-  wsRes['C1'] = { v: '', t: 's', s: { fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } }, border: border() } }
+  const ws2: XLSX.WorkSheet = {}
+  ws2['A1'] = cell('Resumo por Categoria', 's', {
+    fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } },
+    font: { bold: true, color: { rgb: HEADER_FG }, sz: 13 },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: border(),
+  })
+  ws2['B1'] = cell('', 's', { fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } }, border: border() })
+  ws2['C1'] = cell('', 's', { fill: { patternType: 'solid', fgColor: { rgb: HEADER_BG } }, border: border() })
 
-  const resHeaders = ['Tipo', 'Categoria', 'Total (R$)']
-  resHeaders.forEach((h, ci) => { wsRes[cellRef(ci, 2)] = { v: h, t: 's', s: headerStyle() } })
+  ;['Tipo', 'Categoria', 'Total (R$)'].forEach((h, ci) => { ws2[ref(ci, 2)] = cell(h, 's', hdrStyle()) })
 
-  Object.entries(catMap)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .forEach(([k, v], ri) => {
-      const row = ri + 3
-      const cor = tipoColor(v.tipo)
-      wsRes[cellRef(0, row)] = { v: v.tipo,         t: 's', s: dataStyle(cor) }
-      wsRes[cellRef(1, row)] = { v: k.split('|')[1], t: 's', s: dataStyle() }
-      wsRes[cellRef(2, row)] = { v: v.valor,         t: 'n', s: { ...dataStyleRight(cor), numFmt: 'R$ #,##0.00' } }
-    })
+  const entries = Object.entries(catMap).sort(([a], [b]) => a.localeCompare(b))
+  entries.forEach(([k, v], ri) => {
+    const row = ri + 3
+    const cor = tipoColor(v.tipo)
+    ws2[ref(0, row)] = cell(v.tipo,             's', dataStyle(cor))
+    ws2[ref(1, row)] = cell(k.split('||')[2],   's', dataStyle())
+    ws2[ref(2, row)] = cell(v.valor,            'n', dataStyle(cor, true), 'R$ #,##0.00')
+  })
 
-  const resLastRow = Object.keys(catMap).length + 3
-  wsRes['!ref'] = `A1:C${resLastRow}`
-  wsRes['!cols'] = [{ wch: 12 }, { wch: 28 }, { wch: 16 }]
-  wsRes['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
+  ws2['!ref']    = `A1:C${entries.length + 3}`
+  ws2['!cols']   = [{ wch: 12 }, { wch: 28 }, { wch: 16 }]
+  ws2['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
 
-  XLSX.utils.book_append_sheet(wb, wsRes as Parameters<typeof XLSX.utils.book_append_sheet>[1], 'Por Categoria')
+  XLSX.utils.book_append_sheet(wb, ws2, 'Por Categoria')
 
   // Download
   const nomeMes = filtroMes ? `_${filtroMes.padStart(2, '0')}` : ''

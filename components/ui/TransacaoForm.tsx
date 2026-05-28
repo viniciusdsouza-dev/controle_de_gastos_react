@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { addTransacao } from '../../lib/db'
 import { Panel, PanelHeader, PanelBody, Dot, Label, Input, Select, BtnPrimary } from './index'
+import DatePicker from './DatePicker'
 import { ATIVOS, CATEGORIAS_ENTRADA, CATEGORIAS_SAIDA } from '../../lib/utils'
 import { Plus, RefreshCw } from 'lucide-react'
 import type { TipoTransacao, Subtipo } from '../../types'
@@ -27,6 +28,8 @@ function generateId(): string {
 
 export default function TransacaoForm({ uid, defaultData, onSaved }: Props) {
   const [data, setData]           = useState(defaultData)
+  // Atualiza a data sempre que o filtro de mês/ano mudar
+  useEffect(() => { setData(defaultData) }, [defaultData])
   const [tipo, setTipo]           = useState<TipoTransacao>('Entrada')
   const [subtipo, setSubtipo]     = useState<Subtipo>('')
   const [categoria, setCategoria] = useState('')
@@ -100,7 +103,7 @@ export default function TransacaoForm({ uid, defaultData, onSaved }: Props) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div>
             <Label>Data</Label>
-            <Input type="date" value={data} onChange={e => setData(e.target.value)} required />
+            <DatePicker value={data} onChange={setData} />
           </div>
           <div>
             <Label>Tipo</Label>
