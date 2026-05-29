@@ -3,7 +3,7 @@ import {
   getDocs, getDoc, setDoc, query, where,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import type { Transacao, Meta, Config } from '../types'
+import type { Transacao, Meta, Config, InvestimentoPosition, Aporte } from '../types'
 
 // ── TRANSAÇÕES ────────────────────────────────────────────────────────────────
 
@@ -119,4 +119,106 @@ export async function updateGrupoTransacoes(
   await Promise.all(
     doGrupo.map(d => updateDoc(doc(db, 'usuarios', uid, 'transacoes', d.id), campos as Record<string, unknown>))
   )
+}
+
+// ── INVESTIMENTOS ─────────────────────────────────────────────────────────────
+
+
+export async function getPositions(uid: string): Promise<InvestimentoPosition[]> {
+  try {
+    const snap = await getDocs(collection(db, 'usuarios', uid, 'positions'))
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as InvestimentoPosition))
+      .sort((a, b) => b.criadoEm - a.criadoEm)
+  } catch (e) { console.error('getPositions:', e); return [] }
+}
+
+export async function addPosition(uid: string, p: Omit<InvestimentoPosition, 'id' | 'criadoEm'>) {
+  const ref = await addDoc(collection(db, 'usuarios', uid, 'positions'), { ...p, criadoEm: Date.now() })
+  return ref.id
+}
+
+export async function updatePosition(uid: string, id: string, p: Partial<InvestimentoPosition>) {
+  await updateDoc(doc(db, 'usuarios', uid, 'positions', id), p as Record<string, unknown>)
+}
+
+export async function deletePosition(uid: string, id: string) {
+  await deleteDoc(doc(db, 'usuarios', uid, 'positions', id))
+}
+
+export async function getAportes(uid: string, positionId: string): Promise<Aporte[]> {
+  try {
+    const snap = await getDocs(collection(db, 'usuarios', uid, 'positions', positionId, 'aportes'))
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Aporte))
+      .sort((a, b) => a.data.localeCompare(b.data))
+  } catch (e) { console.error('getAportes:', e); return [] }
+}
+
+export async function addAporte(uid: string, positionId: string, a: Omit<Aporte, 'id' | 'criadoEm' | 'positionId'>) {
+  await addDoc(collection(db, 'usuarios', uid, 'positions', positionId, 'aportes'), {
+    ...a, positionId, criadoEm: Date.now(),
+  })
+}
+
+export async function deleteAporte(uid: string, positionId: string, id: string) {
+  await deleteDoc(doc(db, 'usuarios', uid, 'positions', positionId, 'aportes', id))
+}
+
+// ── SINCRONIZAÇÃO INVESTIMENTOS → DASHBOARD ───────────────────────────────────
+
+/**
+ * Exclui transações do dashboard que correspondem a um aporte de investimento.
+ * Critério: tipo=Investido + mesma categoria + mesma data + mesmo valor
+ */
+export async function deleteTransacoesDoAporte(
+  uid: string,
+  categoria: string,
+  subtipo: string,
+  data: string,
+  valor: number
+): Promise<number> {
+  try {
+    const snap = await getDocs(collection(db, 'usuarios', uid, 'transacoes'))
+    const matches = snap.docs.filter(d => {
+      const t = d.data()
+      return (
+        t.tipo      === 'Investido' &&
+        t.categoria === categoria   &&
+        t.subtipo   === subtipo     &&
+        t.data      === data        &&
+        Math.abs(t.valor - valor) < 0.01  // tolerância float
+      )
+    })
+    await Promise.all(matches.map(d => deleteDoc(d.ref)))
+    return matches.length
+  } catch (e) {
+    console.error('deleteTransacoesDoAporte:', e)
+    return 0
+  }
+}
+
+/**
+ * Exclui todas as transações do dashboard vinculadas a uma position inteira.
+ * Critério: tipo=Investido + mesma categoria + mesmo subtipo
+ */
+export async function deleteTransacoesDaPosition(
+  uid: string,
+  categoria: string,
+  subtipo: string
+): Promise<number> {
+  try {
+    const snap = await getDocs(collection(db, 'usuarios', uid, 'transacoes'))
+    const matches = snap.docs.filter(d => {
+      const t = d.data()
+      return (
+        t.tipo      === 'Investido' &&
+        t.categoria === categoria   &&
+        t.subtipo   === subtipo
+      )
+    })
+    await Promise.all(matches.map(d => deleteDoc(d.ref)))
+    return matches.length
+  } catch (e) {
+    console.error('deleteTransacoesDaPosition:', e)
+    return 0
+  }
 }
