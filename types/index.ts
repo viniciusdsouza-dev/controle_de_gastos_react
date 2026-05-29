@@ -35,3 +35,26 @@ export interface ResumoMes {
   saidas:     number
   investidos: number
 }
+
+// ── INVESTIMENTOS ─────────────────────────────────────────────────────────────
+
+export interface InvestimentoPosition {
+  id:           string
+  nome:         string          // ex: "CDB Nubank"
+  subtipo:      Subtipo         // 'Renda Fixa' | 'Renda Variável'
+  categoria:    string          // CDB, Ações, etc.
+  taxaAnual:    number          // % ao ano  (ex: 12.5)
+  taxaMensal:   number          // % ao mês  (ex: 0.98) — calculado ou informado
+  dataInicio:   string          // YYYY-MM-DD primeiro aporte
+  criadoEm:     number
+  ativo:        boolean         // false = encerrado
+  observacao?:  string
+}
+
+export interface Aporte {
+  id:         string
+  positionId: string
+  data:       string    // YYYY-MM-DD
+  valor:      number    // valor aportado
+  criadoEm:  number
+}
