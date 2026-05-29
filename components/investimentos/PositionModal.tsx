@@ -95,7 +95,7 @@ export default function PositionModal({ uid, position, onClose, onSaved }: Props
               <Label>Ativo</Label>
               <Select value={categoria} onChange={e => setCategoria(e.target.value)} required>
                 <option value="">Selecione...</option>
-                {ATIVOS[subtipo]?.map(a => <option key={a} value={a}>{a}</option>)}
+                {(ATIVOS as Record<string, string[]>)[subtipo]?.map((a: string) => <option key={a} value={a}>{a}</option>)}
               </Select>
             </div>
 

@@ -114,10 +114,10 @@ export function Select({ children, ...props }: SelectHTMLAttributes<HTMLSelectEl
   )
 }
 
-export function Label({ children, className }: { children: ReactNode; className?: string }) {
+export function Label({ children, className, style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
     <label className={clsx('block text-xs font-bold tracking-widest uppercase mb-1.5', className)}
-      style={{ color: 'var(--dim)' }}>
+      style={{ color: 'var(--dim)', ...style }}>
       {children}
     </label>
   )
