@@ -222,3 +222,24 @@ export async function deleteTransacoesDaPosition(
     return 0
   }
 }
+
+// ── BANCOS DO USUÁRIO ─────────────────────────────────────────────────────────
+
+import type { Banco } from '../types'
+
+export async function getBancos(uid: string): Promise<Banco[]> {
+  try {
+    const snap = await getDocs(collection(db, 'usuarios', uid, 'bancos'))
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Banco))
+      .sort((a, b) => a.nome.localeCompare(b.nome))
+  } catch (e) { console.error('getBancos:', e); return [] }
+}
+
+export async function addBanco(uid: string, b: Omit<Banco, 'id' | 'criadoEm'>) {
+  const ref = await addDoc(collection(db, 'usuarios', uid, 'bancos'), { ...b, criadoEm: Date.now() })
+  return ref.id
+}
+
+export async function deleteBanco(uid: string, id: string) {
+  await deleteDoc(doc(db, 'usuarios', uid, 'bancos', id))
+}

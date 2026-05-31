@@ -11,6 +11,7 @@ import GraficoPizza from '../../components/ui/GraficoPizza'
 import GraficoBarras from '../../components/ui/GraficoBarras'
 import TabelaTransacoes from '../../components/ui/TabelaTransacoes'
 import MetasWidget from '../../components/ui/MetasWidget'
+import MeusBancosWidget from '../../components/ui/MeusBancosWidget'
 import { SummaryCard, Spinner, Dot } from '../../components/ui'
 import { getTransacoes, getMetas, getConfig, saveConfig } from '../../lib/db'
 import {

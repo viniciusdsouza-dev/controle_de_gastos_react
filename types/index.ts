@@ -58,3 +58,14 @@ export interface Aporte {
   valor:      number    // valor aportado
   criadoEm:  number
 }
+
+// ── BANCOS ────────────────────────────────────────────────────────────────────
+
+export interface Banco {
+  id:        string
+  nome:      string    // "Nubank", "Itaú", etc.
+  slug:      string    // "nubank", "itau" — chave para o logo
+  cor:       string    // cor primária do banco (hex)
+  apelido?:  string    // apelido do usuário ex: "Conta corrente"
+  criadoEm:  number
+}

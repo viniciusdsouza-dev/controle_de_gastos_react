@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { addAporte, addTransacao, deleteAporte, deletePosition, updatePosition, deleteTransacoesDoAporte, deleteTransacoesDaPosition } from '../../lib/db'
 import { calcularSnapshot, fmtTaxa } from '../../lib/investimentos'
+import { getBancoPorSlug } from '../../lib/bancos'
 import { brl } from '../../lib/utils'
 import { Label, Input, BtnPrimary, BtnGhost } from '../ui'
 import DatePicker from '../ui/DatePicker'
@@ -18,8 +19,32 @@ interface Props {
   encerrado?: boolean
 }
 
+
+// Tenta inferir o banco pelo nome da position
+function detectarBancoSlug(nome: string): string | null {
+  const n = nome.toLowerCase()
+  if (n.includes('nubank') || n.includes('nu ')) return 'nubank'
+  if (n.includes('itaú') || n.includes('itau')) return 'itau'
+  if (n.includes('bradesco')) return 'bradesco'
+  if (n.includes('banco do brasil') || n.includes(' bb ') || n.includes('bb-')) return 'bb'
+  if (n.includes('inter')) return 'inter'
+  if (n.includes('caixa')) return 'caixa'
+  if (n.includes('santander')) return 'santander'
+  if (n.includes('c6')) return 'c6'
+  if (n.includes('picpay')) return 'picpay'
+  if (n.includes('neon')) return 'neon'
+  if (n.includes('will')) return 'will'
+  if (n.includes('xp')) return 'xp'
+  if (n.includes('rico')) return 'rico'
+  return null
+}
+
 export default function PositionCard({ item, uid, dataRef, onEdit, onProjetar, onReload, encerrado }: Props) {
   const { position, aportes } = item
+
+  // Detecta banco pelo nome do ativo/position
+  const bancoSlug = detectarBancoSlug(position.nome || position.categoria)
+  const bancoCat  = bancoSlug ? getBancoPorSlug(bancoSlug) : null
 
   // Usa o mais recente entre dataRef e o último aporte
   // (evita que aportes lançados com data futura sejam ignorados)
@@ -119,6 +144,10 @@ export default function PositionCard({ item, uid, dataRef, onEdit, onProjetar, o
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex items-center gap-2 mb-1">
+            {bancoCat && (
+              <span style={{ width: 24, height: 24, flexShrink: 0, display: 'inline-flex' }}
+                dangerouslySetInnerHTML={{ __html: bancoCat.svg.replace('viewBox="0 0 40 40"', 'viewBox="0 0 40 40" width="24" height="24"') }} />
+            )}
             <span className="font-bold text-sm truncate" style={{ color: 'var(--text)' }}>
               {position.nome || position.categoria}
             </span>

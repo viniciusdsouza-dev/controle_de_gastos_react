@@ -4,13 +4,14 @@ import { usePathname, useRouter } from 'next/navigation'
 import { signOut } from 'firebase/auth'
 import { auth } from '../../lib/firebase'
 import { useAuth } from '../../lib/auth-context'
-import { LayoutDashboard, Target, BarChart2, TrendingUp, Wallet, LogOut } from 'lucide-react'
+import { LayoutDashboard, Target, BarChart2, TrendingUp, Wallet, CreditCard, LogOut } from 'lucide-react'
 
 const links = [
   { href: '/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
   { href: '/metas',        label: 'Metas',        icon: Target },
   { href: '/relatorio',    label: 'Relatório',    icon: BarChart2 },
   { href: '/investimentos',label: 'Investimentos',icon: TrendingUp },
+  { href: '/bancos',        label: 'Bancos',        icon: CreditCard },
 ]
 
 export default function Navbar() {
