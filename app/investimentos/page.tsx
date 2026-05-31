@@ -76,7 +76,7 @@ export default function InvestimentosPage() {
       <main className="max-w-screen-xl mx-auto px-4 py-6">
 
         {/* Header */}
-        <div className="flex items-end justify-between mb-6">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
           <div>
             <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--dim)' }}>Carteira</p>
             <h1 className="text-2xl font-bold">Investimentos</h1>
@@ -91,7 +91,7 @@ export default function InvestimentosPage() {
         </div>
 
         {/* Cards de resumo */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           {[
             { label: 'Total Investido',  value: brl(totais.aportado),   icon: <Wallet size={16} />,    color: 'var(--cyan)' },
             { label: 'Valor Atual',      value: brl(totais.atual),      icon: <BarChart3 size={16} />, color: '#00e676' },

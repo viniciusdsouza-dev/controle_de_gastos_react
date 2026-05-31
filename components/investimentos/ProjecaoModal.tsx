@@ -81,7 +81,7 @@ export default function ProjecaoModal({ item, onClose }: Props) {
         <div style={{ overflowY: 'auto', flex: 1 }}>
 
           {/* Cards resumo atual */}
-          <div className="grid grid-cols-3 gap-3 p-5 pb-0">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 pb-0">
             {[
               { label: 'Total Aportado', value: brl(snapAtual.totalAportado), color: 'var(--dim)' },
               { label: 'Valor Atual',    value: brl(snapAtual.valorAtual),    color: 'var(--cyan)' },
@@ -128,7 +128,7 @@ export default function ProjecaoModal({ item, onClose }: Props) {
           </div>
 
           {/* Cards projeção */}
-          <div className="grid grid-cols-3 gap-3 px-5 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-4 pt-4">
             {[
               {
                 label: `Valor em ${mesesFuturos < 12 ? mesesFuturos + ' meses' : mesesFuturos / 12 + (mesesFuturos === 12 ? ' ano' : ' anos')}`,

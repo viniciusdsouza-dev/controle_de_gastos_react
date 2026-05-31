@@ -112,11 +112,11 @@ export default function TransacaoModal({ transacao, uid, onClose, onSaved }: Pro
           onSubmit={handleSubmit}
           style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', flex: 1 }}
         >
-          <div className="p-5 grid grid-cols-2 gap-4">
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             {/* Escopo de edição — só aparece para parcelados */}
             {isRecorrente && (
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <Label>Aplicar alteração em</Label>
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   {([
@@ -188,7 +188,7 @@ export default function TransacaoModal({ transacao, uid, onClose, onSaved }: Pro
 
             {isInvestido && (
               <div
-                className="col-span-2 rounded-lg p-3 flex flex-col gap-3"
+                className="col-span-1 sm:col-span-2 rounded-lg p-3 flex flex-col gap-3"
                 style={{ background: 'var(--surface3)', border: '1px solid var(--border)' }}
               >
                 <div>
@@ -212,7 +212,7 @@ export default function TransacaoModal({ transacao, uid, onClose, onSaved }: Pro
             )}
 
             {!isInvestido && (
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <Label>Categoria</Label>
                 <Select value={categoria} onChange={e => setCategoria(e.target.value)} required>
                   <option value="">Selecione a categoria...</option>

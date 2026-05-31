@@ -139,7 +139,7 @@ export default function PositionCard({ item, uid, dataRef, onEdit, onProjetar, o
       }}>
 
       {/* ── Linha principal ── */}
-      <div className="flex items-center gap-4 px-5 py-4">
+      <div className="flex flex-wrap items-start gap-3 px-4 py-4">
 
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -243,7 +243,7 @@ export default function PositionCard({ item, uid, dataRef, onEdit, onProjetar, o
           {/* Form novo aporte */}
           {!encerrado && (
             <form onSubmit={handleAddAporte}
-              className="flex items-end gap-3 px-5 py-4"
+              className="flex flex-wrap items-end gap-3 px-4 py-4"
               style={{ borderTop: aportes.length > 0 ? '1px solid var(--border)' : 'none' }}>
               <div style={{ flex: '0 0 auto' }}>
                 <Label>Data do Aporte</Label>

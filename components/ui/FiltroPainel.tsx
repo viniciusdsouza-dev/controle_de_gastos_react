@@ -19,7 +19,7 @@ export default function FiltroPainel({ ano, setAno, mes, setMes, categoria, setC
   return (
     <Panel>
       <PanelHeader><Dot color="pink" />Filtros</PanelHeader>
-      <PanelBody className="flex flex-col gap-3">
+      <PanelBody className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
         <div>
           <Label>Ano</Label>
           <Select value={ano} onChange={e => setAno(e.target.value)}>

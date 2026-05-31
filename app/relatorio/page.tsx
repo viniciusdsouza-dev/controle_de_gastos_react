@@ -69,7 +69,7 @@ export default function RelatorioPage() {
     <div className="relative z-10">
       <Navbar />
       <main className="max-w-screen-xl mx-auto px-4 py-6">
-        <div className="flex items-end justify-between mb-6">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
           <div>
             <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--dim)' }}>Análise</p>
             <h1 className="text-2xl font-bold">Relatório Detalhado</h1>
@@ -99,14 +99,14 @@ export default function RelatorioPage() {
         </Panel>
 
         {/* Summary */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
           <SummaryCard label="Entradas"  value={brl(entradas)}   accent="var(--green)" icon={<TrendingDown />} />
           <SummaryCard label="Saídas"    value={brl(saidas)}     accent="var(--red)"   icon={<TrendingUp />} />
           <SummaryCard label="Investido" value={brl(investidos)} accent="var(--gold)"  icon={<BarChart2 />} />
           <SummaryCard label="Saldo"     value={brl(saldo)}      accent={saldo >= 0 ? 'var(--cyan)' : '#ff9800'} />
         </div>
 
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           {/* Por categoria */}
           <Panel>
             <PanelHeader><Dot color="pink" />Por Categoria</PanelHeader>

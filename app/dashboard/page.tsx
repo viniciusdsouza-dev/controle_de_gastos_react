@@ -165,7 +165,7 @@ export default function Dashboard() {
         </div>
 
         {/* Main grid */}
-        <div className="grid grid-cols-[280px_1fr] gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5">
 
           {/* Left */}
           <div className="flex flex-col gap-4">
@@ -190,7 +190,7 @@ export default function Dashboard() {
 
           {/* Right */}
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               <GraficoPizza data={gastosCat} />
               <GraficoBarras data={evolucao} />
             </div>

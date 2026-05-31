@@ -48,15 +48,15 @@ export default function TabelaTransacoes({ transacoes, filtroAno, filtroMes, uid
           <Download size={12} /> {exporting ? 'Gerando...' : 'Exportar XLSX'}
         </BtnOutline>
       </PanelHeader>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-0">
         {transacoes.length === 0
           ? <PanelBody><EmptyState icon={<Inbox />} text="Nenhuma transação encontrada" /></PanelBody>
           : (
             <table className="w-full border-collapse">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor', ''].map(h => (
-                    <th key={h} className="px-4 py-2.5 text-left text-xs font-bold tracking-widest uppercase whitespace-nowrap"
+                  {['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor', ''].map((h, hi) => (
+                    <th key={h} className={`px-3 py-2.5 text-left text-xs font-bold tracking-widest uppercase whitespace-nowrap${hi === 3 ? " hidden md:table-cell" : ""}`}
                       style={{ color: 'var(--dim)' }}>{h}</th>
                   ))}
                 </tr>
@@ -66,10 +66,10 @@ export default function TabelaTransacoes({ transacoes, filtroAno, filtroMes, uid
                   <tr key={t.id}
                     className="transition-colors hover:bg-white/[0.02]"
                     style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--dim)' }}>
+                    <td className="px-3 py-3 font-mono text-xs" style={{ color: 'var(--dim)' }}>
                       {fmtData(t.data)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <div className="flex items-center gap-1.5">
                         <Badge tipo={t.tipo} subtipo={t.subtipo || undefined} />
                         {t.recorrente && (
@@ -82,17 +82,17 @@ export default function TabelaTransacoes({ transacoes, filtroAno, filtroMes, uid
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <BadgeCat>{t.categoria}</BadgeCat>
                     </td>
-                    <td className="px-4 py-3 text-sm" style={{ color: 'var(--dim)' }}>
+                    <td className="px-3 py-3 text-sm hidden md:table-cell" style={{ color: 'var(--dim)' }}>
                       {t.descricao || '—'}
                     </td>
-                    <td className="px-4 py-3 font-mono font-bold text-right whitespace-nowrap"
+                    <td className="px-3 py-3 font-mono font-bold text-right whitespace-nowrap"
                       style={{ color: valColor(t.tipo) }}>
                       {brl(t.valor)}
                     </td>
-                    <td className="px-4 py-3 text-center whitespace-nowrap">
+                    <td className="px-3 py-3 text-center whitespace-nowrap">
                       <BtnGhost onClick={() => onEdit(t)} title="Editar">
                         <Pencil size={13} />
                       </BtnGhost>
