@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from '../lib/auth-context'
+import { HideValuesProvider } from '../lib/hide-values-context'
 
 import type { Viewport } from 'next'
 
@@ -28,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider><HideValuesProvider>{children}</HideValuesProvider></AuthProvider>
       </body>
     </html>
   )

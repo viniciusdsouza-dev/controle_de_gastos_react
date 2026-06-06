@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useHideValues, maskValue } from '../../lib/hide-values-context'
 import { brl } from '../../lib/utils'
 import { Pencil, Clock, ArrowRight } from 'lucide-react'
 import type { Config } from '../../types'
@@ -18,6 +19,8 @@ interface Props {
 export default function SaldoCard({
   saldo, saldoMesAnterior, config, ehMesAtual, dataCorte, onSaveConfig
 }: Props) {
+  const { hidden } = useHideValues()
+  const [popup, setPopup]         = useState(false)
   const [showAjuste, setShowAjuste] = useState(false)
   const [ajusteVal, setAjusteVal]   = useState('')
   const [saving, setSaving]         = useState(false)
@@ -68,9 +71,14 @@ export default function SaldoCard({
         )}
       </div>
 
-      {/* Value */}
-      <div className="font-mono text-2xl font-bold leading-none mb-1" style={{ color: accent }}>
-        {brl(saldoSafe)}
+      {/* Value — truncate to never overflow card */}
+      <div
+        className="font-mono text-xl font-bold leading-none mb-1 truncate cursor-pointer"
+        style={{ color: accent }}
+        onClick={() => { if (!hidden) setPopup(true) }}
+        title={hidden ? '' : brl(saldoSafe)}
+      >
+        {maskValue(brl(saldoSafe), hidden)}
       </div>
 
       {/* Corte info */}
@@ -86,7 +94,7 @@ export default function SaldoCard({
         <ArrowRight size={10} />
         Mês anterior:
         <span className="font-mono font-semibold" style={{ color: saldoMesAnterior >= 0 ? 'var(--green)' : 'var(--red)' }}>
-          {brl(isNaN(saldoMesAnterior) ? 0 : saldoMesAnterior)}
+          {maskValue(brl(isNaN(saldoMesAnterior) ? 0 : saldoMesAnterior), hidden)}
         </span>
       </div>
 
@@ -123,6 +131,24 @@ export default function SaldoCard({
             </button>
           </div>
         </form>
+      )}
+
+      {/* Popup valor completo */}
+      {popup && (
+        <>
+          <div className="fixed inset-0 z-50" style={{ background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setPopup(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 rounded-2xl p-6 text-center"
+            style={{ background: 'var(--surface)', border: `1px solid ${accent}44`, boxShadow: `0 0 40px ${accent}22`, minWidth: 240 }}>
+            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: 'var(--dim)' }}>Saldo</p>
+            <p className="font-mono text-3xl font-bold" style={{ color: accent }}>{brl(saldoSafe)}</p>
+            <button onClick={() => setPopup(false)}
+              className="mt-4 text-xs px-4 py-2 rounded-lg"
+              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--muted)', cursor: 'pointer' }}>
+              Fechar
+            </button>
+          </div>
+        </>
       )}
     </div>
   )

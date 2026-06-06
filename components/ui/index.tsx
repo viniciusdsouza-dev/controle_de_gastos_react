@@ -1,5 +1,6 @@
 'use client'
-import { ReactNode, InputHTMLAttributes, SelectHTMLAttributes } from 'react'
+import { useHideValues, maskValue } from '../../lib/hide-values-context'
+import { ReactNode, InputHTMLAttributes, SelectHTMLAttributes, useState } from 'react'
 import { clsx } from 'clsx'
 
 // ── PANEL ─────────────────────────────────────────────────────────────────────
@@ -59,25 +60,56 @@ interface CardProps {
 }
 
 export function SummaryCard({ label, value, accent, icon, children, className }: CardProps) {
+  const { hidden } = useHideValues()
+  const [popup, setPopup] = useState(false)
+  const displayed = maskValue(value, hidden)
+  const isLong = value.length > 10
+
   return (
-    <div className={clsx('relative rounded-xl p-5 overflow-hidden transition-all hover:-translate-y-0.5', className)}
-      style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'none' }}>
-      {/* Top accent line */}
-      <div className="absolute top-0 left-0 right-0 h-0.5"
-        style={{ background: `linear-gradient(90deg, ${accent}, transparent)` }} />
-      <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: 'var(--dim)' }}>
-        {label}
-      </div>
-      <div className="font-mono text-xl sm:text-2xl font-bold leading-none truncate" style={{ color: accent }}>
-        {value}
-      </div>
-      {children}
-      {icon && (
-        <div className="absolute right-3 top-3 opacity-10" style={{ fontSize: 28 }}>
-          {icon}
+    <>
+      <div
+        className={clsx('relative rounded-xl p-4 overflow-hidden transition-all hover:-translate-y-0.5', className)}
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'none', cursor: isLong && !hidden ? 'pointer' : 'default' }}
+        onClick={() => { if (isLong && !hidden) setPopup(true) }}
+      >
+        {/* Top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-0.5"
+          style={{ background: `linear-gradient(90deg, ${accent}, transparent)` }} />
+        <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: 'var(--dim)' }}>
+          {label}
         </div>
+        <div className="font-mono text-xl font-bold leading-none truncate" style={{ color: accent }}>
+          {displayed}
+        </div>
+        {isLong && !hidden && (
+          <p className="text-xs mt-1" style={{ color: 'var(--muted)', fontSize: 9 }}>toque para ver completo</p>
+        )}
+        {children}
+        {icon && (
+          <div className="absolute right-3 top-3 opacity-10" style={{ fontSize: 24 }}>
+            {icon}
+          </div>
+        )}
+      </div>
+
+      {/* Popup valor completo */}
+      {popup && (
+        <>
+          <div className="fixed inset-0 z-50" style={{ background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setPopup(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 rounded-2xl p-6 text-center"
+            style={{ background: 'var(--surface)', border: `1px solid ${accent}44`, boxShadow: `0 0 40px ${accent}22`, minWidth: 240 }}>
+            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: 'var(--dim)' }}>{label}</p>
+            <p className="font-mono text-3xl font-bold" style={{ color: accent }}>{value}</p>
+            <button onClick={() => setPopup(false)}
+              className="mt-4 text-xs px-4 py-2 rounded-lg"
+              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--muted)', cursor: 'pointer' }}>
+              Fechar
+            </button>
+          </div>
+        </>
       )}
-    </div>
+    </>
   )
 }
 

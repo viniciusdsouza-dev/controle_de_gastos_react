@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { useHideValues } from '../../lib/hide-values-context'
 import { usePathname, useRouter } from 'next/navigation'
 import { signOut } from 'firebase/auth'
 import { auth } from '../../lib/firebase'
 import { useAuth } from '../../lib/auth-context'
-import { LayoutDashboard, Target, BarChart2, TrendingUp, Wallet, CreditCard, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Target, BarChart2, TrendingUp, Wallet, CreditCard, LogOut, Menu, X, Eye, EyeOff } from 'lucide-react'
 
 const links = [
   { href: '/dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
@@ -20,6 +21,7 @@ export default function Navbar() {
   const router = useRouter()
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
+  const { hidden, toggle } = useHideValues()
 
   async function handleLogout() {
     await signOut(auth)
@@ -59,7 +61,13 @@ export default function Navbar() {
             <span className="text-xs px-2 hidden lg:inline" style={{ color: 'var(--dim)' }}>
               {user?.displayName || user?.email?.split('@')[0]}
             </span>
-            <button onClick={handleLogout}
+            <button onClick={toggle}
+              className="p-1.5 rounded-md transition-all"
+              style={{ color: hidden ? 'var(--cyan)' : 'var(--muted)', background: hidden ? 'rgba(0,229,255,0.08)' : 'transparent' }}
+              title={hidden ? 'Mostrar valores' : 'Ocultar valores'}>
+              {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          <button onClick={handleLogout}
               className="p-1.5 rounded-md transition-all hover:bg-red-500/10"
               style={{ color: 'var(--muted)' }} title="Sair">
               <LogOut size={14} />
@@ -114,6 +122,19 @@ export default function Navbar() {
 
               {/* Divider */}
               <div className="my-1" style={{ borderTop: '1px solid var(--border)' }} />
+
+              {/* Ocultar valores */}
+              <button onClick={toggle}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition-all"
+                style={{
+                  color:      hidden ? 'var(--cyan)' : 'var(--dim)',
+                  background: hidden ? 'rgba(0,229,255,0.08)' : 'transparent',
+                  border:     hidden ? '1px solid rgba(0,229,255,0.2)' : '1px solid transparent',
+                  cursor: 'pointer',
+                }}>
+                {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
+                {hidden ? 'Mostrar valores' : 'Ocultar valores'}
+              </button>
 
               {/* User + logout */}
               <div className="flex items-center justify-between px-4 py-2">
