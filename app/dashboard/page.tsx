@@ -19,7 +19,7 @@ import {
   ultimoDiaDoMes, hoje, brl, MESES,
 } from '../../lib/utils'
 import type { Transacao, Meta, Config } from '../../types'
-import { TrendingDown, TrendingUp, BarChart2 } from 'lucide-react'
+import { ArrowUp, ArrowDown, BarChart2 } from 'lucide-react'
 
 export default function Dashboard() {
   const { user, loading } = useAuth()
@@ -147,9 +147,9 @@ export default function Dashboard() {
         {/* Summary cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <SummaryCard label="Entradas" value={brl(entradas)} accent="var(--green)"
-            icon={<TrendingDown />} />
+            icon={<ArrowUp />} />
           <SummaryCard label="Saídas" value={brl(saidas)} accent="var(--red)"
-            icon={<TrendingUp />} />
+            icon={<ArrowDown />} />
           <SummaryCard label="Investido" value={brl(investidos)} accent="var(--gold)"
             icon={<BarChart2 />} />
           <SaldoCard

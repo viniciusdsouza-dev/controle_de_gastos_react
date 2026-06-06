@@ -68,12 +68,12 @@ export function SummaryCard({ label, value, accent, icon, children, className }:
       <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: 'var(--dim)' }}>
         {label}
       </div>
-      <div className="font-mono text-2xl font-bold leading-none" style={{ color: accent }}>
+      <div className="font-mono text-xl sm:text-2xl font-bold leading-none truncate" style={{ color: accent }}>
         {value}
       </div>
       {children}
       {icon && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-4xl opacity-10">
+        <div className="absolute right-3 top-3 opacity-10" style={{ fontSize: 28 }}>
           {icon}
         </div>
       )}

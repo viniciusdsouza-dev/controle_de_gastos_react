@@ -8,7 +8,7 @@ import { getTransacoes, getConfig } from '../../lib/db'
 import { filtrarTransacoes, calcularSaldoAcumulado, ultimoDiaDoMes, brl, fmtData, MESES } from '../../lib/utils'
 import { exportarXlsx } from '../../lib/exportXlsx'
 import type { Transacao } from '../../types'
-import { Download, Inbox, TrendingDown, TrendingUp, BarChart2, RefreshCw } from 'lucide-react'
+import { Download, Inbox, ArrowUp, ArrowDown, BarChart2, RefreshCw } from 'lucide-react'
 
 export default function RelatorioPage() {
   const { user, loading } = useAuth()
@@ -100,8 +100,8 @@ export default function RelatorioPage() {
 
         {/* Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <SummaryCard label="Entradas"  value={brl(entradas)}   accent="var(--green)" icon={<TrendingDown />} />
-          <SummaryCard label="Saídas"    value={brl(saidas)}     accent="var(--red)"   icon={<TrendingUp />} />
+          <SummaryCard label="Entradas"  value={brl(entradas)}   accent="var(--green)" icon={<ArrowUp />} />
+          <SummaryCard label="Saídas"    value={brl(saidas)}     accent="var(--red)"   icon={<ArrowDown />} />
           <SummaryCard label="Investido" value={brl(investidos)} accent="var(--gold)"  icon={<BarChart2 />} />
           <SummaryCard label="Saldo"     value={brl(saldo)}      accent={saldo >= 0 ? 'var(--cyan)' : '#ff9800'} />
         </div>
@@ -114,28 +114,44 @@ export default function RelatorioPage() {
               {resumoCat.length === 0
                 ? <PanelBody><EmptyState icon={<Inbox />} text="Sem transações" /></PanelBody>
                 : (
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                        {['Tipo','Subtipo','Categoria','Total'].map(h => (
-                          <th key={h} className="px-4 py-2.5 text-left text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--dim)' }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {resumoCat.map((r, i) => (
-                        <tr key={i} className="hover:bg-white/[0.02]" style={{ borderBottom: '1px solid var(--border)' }}>
-                          <td className="px-4 py-3"><Badge tipo={r.tipo} /></td>
-                          <td className="px-4 py-3 text-xs" style={{ color: 'var(--muted)' }}>{r.subtipo || '—'}</td>
-                          <td className="px-4 py-3"><BadgeCat>{r.categoria}</BadgeCat></td>
-                          <td className="px-4 py-3 font-mono font-bold"
-                            style={{ color: r.tipo === 'Entrada' ? 'var(--green)' : r.tipo === 'Investido' ? 'var(--gold)' : 'var(--red)' }}>
-                            {brl(r.valor)}
-                          </td>
+                  <>
+                    {/* Desktop */}
+                    <table className="w-full border-collapse hidden sm:table">
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                          {['Tipo','Categoria','Total'].map(h => (
+                            <th key={h} className="px-4 py-2.5 text-left text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--dim)' }}>{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {resumoCat.map((r, i) => (
+                          <tr key={i} className="hover:bg-white/[0.02]" style={{ borderBottom: '1px solid var(--border)' }}>
+                            <td className="px-4 py-3"><Badge tipo={r.tipo} /></td>
+                            <td className="px-4 py-3"><BadgeCat>{r.categoria}</BadgeCat></td>
+                            <td className="px-4 py-3 font-mono font-bold"
+                              style={{ color: r.tipo === 'Entrada' ? 'var(--green)' : r.tipo === 'Investido' ? 'var(--gold)' : 'var(--red)' }}>
+                              {brl(r.valor)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {/* Mobile: cards */}
+                    <div className="sm:hidden flex flex-col gap-2 p-3">
+                      {resumoCat.map((r, i) => {
+                        const cor = r.tipo === 'Entrada' ? 'var(--green)' : r.tipo === 'Investido' ? 'var(--gold)' : 'var(--red)'
+                        return (
+                          <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+                            style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+                            <Badge tipo={r.tipo} />
+                            <span className="flex-1 text-xs truncate" style={{ color: 'var(--text)' }}>{r.categoria}</span>
+                            <span className="font-mono font-bold text-sm flex-shrink-0" style={{ color: cor }}>{brl(r.valor)}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
                 )}
             </div>
           </Panel>
@@ -147,37 +163,51 @@ export default function RelatorioPage() {
               {filtradas.length === 0
                 ? <PanelBody><EmptyState icon={<Inbox />} text="Sem transações no período" /></PanelBody>
                 : (
-                  <table className="w-full border-collapse">
-                    <thead className="sticky top-0" style={{ background: 'var(--surface)' }}>
-                      <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                        {['Data','Tipo','Categoria','Valor'].map(h => (
-                          <th key={h} className="px-4 py-2.5 text-left text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--dim)' }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filtradas.map(t => (
-                        <tr key={t.id} className="hover:bg-white/[0.02]" style={{ borderBottom: '1px solid var(--border)' }}>
-                          <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--dim)' }}>{fmtData(t.data)}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1">
-                              <Badge tipo={t.tipo} />
-                              {t.recorrente && (
-                                <span title="Recorrente" style={{ color: 'var(--cyan)' }}>
-                                  <RefreshCw size={10} />
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3"><BadgeCat>{t.categoria}</BadgeCat></td>
-                          <td className="px-4 py-3 font-mono font-bold"
-                            style={{ color: t.tipo === 'Entrada' ? 'var(--green)' : t.tipo === 'Investido' ? 'var(--gold)' : 'var(--red)' }}>
-                            {brl(t.valor)}
-                          </td>
+                  <>
+                    {/* Desktop */}
+                    <table className="w-full border-collapse hidden sm:table">
+                      <thead className="sticky top-0" style={{ background: 'var(--surface)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                          {['Data','Tipo','Categoria','Valor'].map(h => (
+                            <th key={h} className="px-4 py-2.5 text-left text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--dim)' }}>{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {filtradas.map(t => {
+                          const cor = t.tipo === 'Entrada' ? 'var(--green)' : t.tipo === 'Investido' ? 'var(--gold)' : 'var(--red)'
+                          return (
+                            <tr key={t.id} className="hover:bg-white/[0.02]" style={{ borderBottom: '1px solid var(--border)' }}>
+                              <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--dim)' }}>{fmtData(t.data)}</td>
+                              <td className="px-4 py-3"><Badge tipo={t.tipo} /></td>
+                              <td className="px-4 py-3"><BadgeCat>{t.categoria}</BadgeCat></td>
+                              <td className="px-4 py-3 font-mono font-bold" style={{ color: cor }}>{brl(t.valor)}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                    {/* Mobile: lista compacta */}
+                    <div className="sm:hidden flex flex-col">
+                      {filtradas.map(t => {
+                        const cor = t.tipo === 'Entrada' ? 'var(--green)' : t.tipo === 'Investido' ? 'var(--gold)' : 'var(--red)'
+                        return (
+                          <div key={t.id} className="flex items-center gap-3 px-4 py-3"
+                            style={{ borderBottom: '1px solid var(--border)' }}>
+                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cor }} />
+                            <div className="flex-1 min-w-0">
+                              <Badge tipo={t.tipo} />
+                              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--muted)' }}>{t.categoria}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-mono font-bold text-sm" style={{ color: cor }}>{brl(t.valor)}</p>
+                              <p className="text-xs" style={{ color: 'var(--muted)' }}>{fmtData(t.data)}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
                 )}
             </div>
           </Panel>

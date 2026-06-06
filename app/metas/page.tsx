@@ -60,7 +60,7 @@ export default function MetasPage() {
           <h1 className="text-2xl font-bold">Metas de Gastos</h1>
         </div>
 
-        <div className="grid grid-cols-[280px_1fr] gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5">
           {/* Form */}
           <Panel>
             <PanelHeader><Dot color="cyan" />Nova Meta</PanelHeader>
