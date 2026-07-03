@@ -69,3 +69,12 @@ export interface Banco {
   apelido?:  string    // apelido do usuário ex: "Conta corrente"
   criadoEm:  number
 }
+
+export interface Resgate {
+  id:         string
+  positionId: string
+  data:       string   // YYYY-MM-DD
+  valor:      number   // valor retirado
+  descricao?: string
+  criadoEm:   number
+}

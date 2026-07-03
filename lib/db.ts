@@ -243,3 +243,25 @@ export async function addBanco(uid: string, b: Omit<Banco, 'id' | 'criadoEm'>) {
 export async function deleteBanco(uid: string, id: string) {
   await deleteDoc(doc(db, 'usuarios', uid, 'bancos', id))
 }
+
+// ── RESGATES ──────────────────────────────────────────────────────────────────
+
+import type { Resgate } from '../types'
+
+export async function getResgates(uid: string, positionId: string): Promise<Resgate[]> {
+  try {
+    const snap = await getDocs(collection(db, 'usuarios', uid, 'positions', positionId, 'resgates'))
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Resgate))
+      .sort((a, b) => a.data.localeCompare(b.data))
+  } catch (e) { console.error('getResgates:', e); return [] }
+}
+
+export async function addResgate(uid: string, positionId: string, r: Omit<Resgate, 'id' | 'criadoEm' | 'positionId'>) {
+  await addDoc(collection(db, 'usuarios', uid, 'positions', positionId, 'resgates'), {
+    ...r, positionId, criadoEm: Date.now(),
+  })
+}
+
+export async function deleteResgate(uid: string, positionId: string, id: string) {
+  await deleteDoc(doc(db, 'usuarios', uid, 'positions', positionId, 'resgates', id))
+}

@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '../../lib/auth-context'
 import Navbar from '../../components/layout/Navbar'
 import { Spinner } from '../../components/ui'
-import { getPositions, getAportes } from '../../lib/db'
-import type { InvestimentoPosition, Aporte } from '../../types'
+import { getPositions, getAportes, getResgates } from '../../lib/db'
+import type { InvestimentoPosition, Aporte, Resgate } from '../../types'
 import { calcularSnapshot } from '../../lib/investimentos'
 import { brl } from '../../lib/utils'
 import PositionCard from '../../components/investimentos/PositionCard'
@@ -16,6 +16,7 @@ import { Plus, TrendingUp, Wallet, BarChart3, RefreshCw } from 'lucide-react'
 export interface PositionComAportes {
   position: InvestimentoPosition
   aportes:  Aporte[]
+  resgates: Resgate[]
 }
 
 export default function InvestimentosPage() {
@@ -35,10 +36,13 @@ export default function InvestimentosPage() {
     setFetching(true)
     const positions = await getPositions(user.uid)
     const withAportes = await Promise.all(
-      positions.map(async p => ({
-        position: p,
-        aportes: await getAportes(user.uid, p.id),
-      }))
+      positions.map(async p => {
+        const [aportes, resgates] = await Promise.all([
+          getAportes(user.uid, p.id),
+          getResgates(user.uid, p.id),
+        ])
+        return { position: p, aportes, resgates }
+      })
     )
     setItems(withAportes)
     setFetching(false)
@@ -50,15 +54,16 @@ export default function InvestimentosPage() {
 
   // dataRef: usa hoje ou o último aporte (o que for mais recente)
   // Isso garante que aportes futuros já registrados sejam contabilizados
-  function dataRefParaPosition(aportes: import('../../types').Aporte[]): string {
-    if (!aportes.length) return hoje
-    const ultimo = aportes.reduce((max, a) => a.data > max ? a.data : max, hoje)
+  function dataRefParaPosition(aportes: import('../../types').Aporte[], resgates: import('../../types').Resgate[]): string {
+    const eventos = [...aportes, ...resgates]
+    if (!eventos.length) return hoje
+    const ultimo = eventos.reduce((max, e) => e.data > max ? e.data : max, hoje)
     return ultimo > hoje ? ultimo : hoje
   }
 
   // ── Totais gerais ──────────────────────────────────────────────────────────
-  const totais = items.reduce((acc, { position, aportes }) => {
-    const snap = calcularSnapshot(position, aportes, dataRefParaPosition(aportes))
+  const totais = items.reduce((acc, { position, aportes, resgates }) => {
+    const snap = calcularSnapshot(position, aportes, dataRefParaPosition(aportes, resgates), resgates)
     acc.aportado  += snap.totalAportado
     acc.atual     += snap.valorAtual
     acc.rendimento += snap.rendimentoTotal
@@ -131,7 +136,7 @@ export default function InvestimentosPage() {
                 key={item.position.id}
                 item={item}
                 uid={user!.uid}
-                dataRef={dataRefParaPosition(item.aportes)}
+                dataRef={dataRefParaPosition(item.aportes, item.resgates)}
                 onEdit={() => setEditando(item.position)}
                 onProjetar={() => setProjetando(item)}
                 onReload={load}
@@ -147,7 +152,7 @@ export default function InvestimentosPage() {
                     key={item.position.id}
                     item={item}
                     uid={user!.uid}
-                    dataRef={dataRefParaPosition(item.aportes)}
+                    dataRef={dataRefParaPosition(item.aportes, item.resgates)}
                     onEdit={() => setEditando(item.position)}
                     onProjetar={() => setProjetando(item)}
                     onReload={load}

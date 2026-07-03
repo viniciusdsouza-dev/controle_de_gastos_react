@@ -41,14 +41,15 @@ export default function ProjecaoModal({ item, onClose }: Props) {
 
   const [mesesFuturos, setMesesFuturos] = useState(12)
 
+  const { resgates } = item
   const snapAtual = useMemo(
-    () => calcularSnapshot(position, aportes, hoje),
-    [position, aportes, hoje]
+    () => calcularSnapshot(position, aportes, hoje, resgates),
+    [position, aportes, resgates, hoje]
   )
 
   const projecao = useMemo(
-    () => calcularProjecao(position, aportes, mesesFuturos, hoje),
-    [position, aportes, mesesFuturos, hoje]
+    () => calcularProjecao(position, aportes, mesesFuturos, hoje, resgates),
+    [position, aportes, resgates, mesesFuturos, hoje]
   )
 
   const snapFuturo = projecao[projecao.length - 1]
